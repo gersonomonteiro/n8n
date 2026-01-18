@@ -1,0 +1,659 @@
+{
+  "name": "Clinica odontologica",
+  "nodes": [
+    {
+      "parameters": {
+        "resource": "calendar",
+        "calendar": {
+          "__rl": true,
+          "value": "7ecd41b186319426350232da57686f8d41c289042ce56d2faa2b33ba8681ae3e@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Clinica odontologica"
+        },
+        "timeMin": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start_Time', ``, 'string') }}",
+        "timeMax": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End_Time', ``, 'string') }}",
+        "options": {}
+      },
+      "id": "6cb4cb42-b5e8-446d-9711-d72649c8b6cc",
+      "name": "Check Availability",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "position": [
+        480,
+        528
+      ],
+      "typeVersion": 1.3,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "eHSmJycJJvd2Kgmp",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "appointments/messages-upsert",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "8b070be5-d1b2-4f02-99a4-6278450b9fe7",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        -464,
+        224
+      ],
+      "webhookId": "f416ff3e-0410-4538-a3ab-7b52dce5b470",
+      "typeVersion": 2.1
+    },
+    {
+      "parameters": {
+        "promptType": "=define",
+        "text": "={{ $('Webhook').item.json.body.data.message.conversation }}",
+        "options": {
+          "systemMessage": "=You are a virtual assistant specializing in appointment management for dental clinic via WhatsApp. \nYour role is to manage consultations accurately, ensuring real availability while providing a smooth experience for patients.\n\nOffice Hours:\n- Monday – Friday: 9:00 AM – 8:00 PM\n- Saturday: 9:00 AM – 1:00 PM\n- Sunday: Closed\n- Consultation Duration: 1 hour\n- Break Between Patients: 15 minutes\n\nBooking Process:\n1. Collect Patient Information:\n   - Full Name\n   - Phone Number\n   - Email Address\n   - Desired Date and Time\n   If any information is missing, politely ask the patient before proceeding.\n   If the client sends the name of the service they intend to have done, add the name to the appointment title, and the confirmation message should include guidance on this consultation, which can be found in \"Search_Data_Table\" \n\n2. Availability Check:\n   - Always use the \"Check Availability\" tool to verify free slots in Google Calendar.\n   - If requested time overlaps with an existing appointment, suggest the next available slot.\n   - Do not create or confirm an appointment until the user explicitly approves the slot.\n\n3. Booking Confirmation:\n   - Only create the appointment using the \"Create Event\" tool after explicit user confirmation.\n   - Do not say \"appointment booked\" unless the tool \"Creat event\" is actually used and retorn success.\n   - Appointment ID format: APT-YYYYMMDD-XXXXXX (6 random alphanumeric characters).\n   - Event Title: Patient Name - phone\n   - Add service name in Event Title if provided.\n   - Event Description: Include full name, phone, email, service, appointment ID, date & time.\n   - Cretae new row in \"Create row\" ly if the appointment is confirmed.\n4 Knowledge Base (Services & Pricing)\n- Before answering any questions about prices, procedures, or descriptions, ALWAYS use the \"Search_Data_Table\" tool.\n- Provide pricing and guidance only when asked. If not asked, respond only with the service name and description.\n- If a service is not found in the database, politely ask the user to contact the office directly at +99999343.\n\nConfirmation Message Format:\nWhen booking is complete, return only this message:\n✅ Appointment Confirmed:\n- Full Name: {full_name}\n- Phone: {phone}\n- Email: {email}\n- Date: {date}\n- Time: {time}\n- Appointment ID: {appointment_id}\n\nDo NOT include:\n- Calendar event links\n- Extra text after the appointment ID\n- Any confirmation without Create Event tool usage\n\nCancellations:\nIf asked to cancel, reply: \"Please check your booking email. I cannot cancel appointments for you.\"\n\nVerification:\nIf asked to check an appointment by ID, reply: \"Check your email we sent when you booked.\"\n\nTools Available:\n- Check Availability → Verify free slots in Google Calendar\n- Create Event → Book confirmed appointment in Google Calendar\n- Create row -> add the appointment after confirmation\n\nCommunication Rules:\n- Always be polite, clear, and friendly.\n- Never assume missing details—ask for them.\n- Never create or cancel without explicit confirmation.\n- Stick strictly to availability check and booking after confirmation.\n- The assistant may **switch to English or Portuguese only if the client initiates the conversation in that language.\nToday's Date: {{ $now }}"
+        }
+      },
+      "id": "39947ea3-452c-4c93-bdaa-9639a16a574a",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        464,
+        240
+      ],
+      "typeVersion": 1.7
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "7ecd41b186319426350232da57686f8d41c289042ce56d2faa2b33ba8681ae3e@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Clinica odontologica"
+        },
+        "start": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start', ``, 'string') }}",
+        "end": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End', ``, 'string') }}",
+        "additionalFields": {
+          "attendees": [
+            "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('attendees0_Attendees', `emalil`, 'string') }}"
+          ],
+          "description": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Description', ``, 'string') }}",
+          "sendUpdates": "all",
+          "showMeAs": "opaque",
+          "summary": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Summary', ``, 'string') }}"
+        }
+      },
+      "id": "7eec2403-de34-4163-8984-3c5f6be8070c",
+      "name": "Creat event",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "position": [
+        640,
+        528
+      ],
+      "typeVersion": 1.3,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "eHSmJycJJvd2Kgmp",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1344,
+        -48
+      ],
+      "id": "9943a6bf-3d7c-4eb6-bcaf-54b3c9dabbbe",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "v5c9vssQ0NyFQbuW",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2dc8aa9e-684a-4287-a4e7-098518ea65f7",
+              "leftValue": "={{ $json.from }}",
+              "rightValue": "99999998@s.whatsapp.net",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "58bdbb79-6cda-4210-9a1f-4bab5ed1327a",
+              "leftValue": "={{ $json.from }}",
+              "rightValue": "999999@s.whatsapp.net",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "06619515-ee5b-4ad4-87aa-5293b4378922",
+              "leftValue": "={{ $json.from }}",
+              "rightValue": "99999997@s.whatsapp.net",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        304,
+        240
+      ],
+      "id": "887363c1-4597-4c97-868c-265f3dc87efa",
+      "name": "groupFilter"
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "appointments",
+        "remoteJid": "={{ $('from').item.json.from }}",
+        "messageText": "={{ $json.output }}",
+        "options_message": {}
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        768,
+        240
+      ],
+      "id": "c8fe040b-a4ba-4f9e-bcac-48ff79208471",
+      "name": "Evolution API",
+      "credentials": {
+        "evolutionApi": {
+          "id": "wjUDZ3VW8DkoTolQ",
+          "name": "Evolution account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1yDpQMRwXzLBk2YRhPNShCLWcW8eVvEuMWJoBxqakJNw",
+          "mode": "list",
+          "cachedResultName": "clinica odontologica",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yDpQMRwXzLBk2YRhPNShCLWcW8eVvEuMWJoBxqakJNw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 531678790,
+          "mode": "list",
+          "cachedResultName": "service",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yDpQMRwXzLBk2YRhPNShCLWcW8eVvEuMWJoBxqakJNw/edit#gid=531678790"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        768,
+        528
+      ],
+      "id": "d7faed9a-fe9b-44c0-bae7-2b66b7a2a6f1",
+      "name": "Search_Data_Table",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "y9wHhlpoXWZ4is2D",
+          "name": "n8n.gom Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "952c1118-ae15-49f5-adc4-02c0d1dc097b",
+              "leftValue": "={{ $json.body.data.key.remoteJid }}",
+              "rightValue": "@lid",
+              "operator": {
+                "type": "string",
+                "operation": "endsWith"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -272,
+        224
+      ],
+      "id": "43bf9ac2-490f-41a9-8236-0b8ef983df67",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1b9808e8-57cd-4d09-a4f6-889b63725fab",
+              "name": "=from",
+              "value": "={{ $json.body.data.key.remoteJidAlt }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -64,
+        160
+      ],
+      "id": "49597b6c-826c-4e3d-bd09-6d05773818dc",
+      "name": "from-not-ok"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bc65d532-7199-447a-a347-6fe800480bab",
+              "name": "from",
+              "value": "={{ $json.body.data.key.remoteJid }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -64,
+        304
+      ],
+      "id": "6b0e0917-54aa-4931-bbd1-88551d4f8ec0",
+      "name": "from-ok"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        144,
+        240
+      ],
+      "id": "9aacab2a-b949-4126-9f43-11f86350e0b3",
+      "name": "from"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1yDpQMRwXzLBk2YRhPNShCLWcW8eVvEuMWJoBxqakJNw",
+          "mode": "list",
+          "cachedResultName": "clinica odontologica",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yDpQMRwXzLBk2YRhPNShCLWcW8eVvEuMWJoBxqakJNw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "appointment",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yDpQMRwXzLBk2YRhPNShCLWcW8eVvEuMWJoBxqakJNw/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "appointment_id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('appointment_id', ``, 'string') }}",
+            "full_name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('full_name', ``, 'string') }}",
+            "email": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('email', ``, 'string') }}",
+            "phone": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('phone', ``, 'string') }}",
+            "date": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('date', ``, 'string') }}",
+            "time": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('time', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "appointment_id",
+              "displayName": "appointment_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "full_name",
+              "displayName": "full_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "time",
+              "displayName": "time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        912,
+        528
+      ],
+      "id": "90a059bc-ef37-4388-87ab-9be32c35cfe4",
+      "name": "Create row",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "y9wHhlpoXWZ4is2D",
+          "name": "n8n.gom Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.from }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        336,
+        544
+      ],
+      "id": "486fbf96-1ae3-412d-aa39-fd23764bb90f",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        144,
+        528
+      ],
+      "id": "9d56ea1e-232e-464c-9316-36cb3ccfac9c",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "ZGBwvAyGVg4aDvYR",
+          "name": "OpenAi account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Evolution API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Creat event": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Availability": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "groupFilter": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search_Data_Table": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "from-not-ok",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "from-ok",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "from-not-ok": {
+      "main": [
+        [
+          {
+            "node": "from",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "from-ok": {
+      "main": [
+        [
+          {
+            "node": "from",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "from": {
+      "main": [
+        [
+          {
+            "node": "groupFilter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create row": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "timeSavedMode": "fixed",
+    "timezone": "Atlantic/Cape_Verde",
+    "callerPolicy": "workflowsFromSameOwner",
+    "executionTimeout": -1,
+    "availableInMCP": false
+  },
+  "versionId": "9c1b410b-d7b4-4a02-934c-cca0526d906b",
+  "meta": {
+    "templateId": "8043",
+    "templateCredsSetupCompleted": true,
+    "instanceId": "fdb2f1f77556f7a0a3d4dbf45301d78b5dfc2521fa128cb59dab569188d2a6eb"
+  },
+  "id": "2UCTZmuA54AZhzbB",
+  "tags": [
+    {
+      "name": "whatsApp",
+      "id": "7aGUntsu58i9ueMz",
+      "updatedAt": "2026-01-18T13:13:01.397Z",
+      "createdAt": "2026-01-18T13:13:01.397Z"
+    },
+    {
+      "name": "google calendar",
+      "id": "oL3HRaQ1lietUQqg",
+      "updatedAt": "2026-01-18T13:13:11.972Z",
+      "createdAt": "2026-01-18T13:13:11.972Z"
+    },
+    {
+      "name": "appointment",
+      "id": "1K6su7v60rv8wq6i",
+      "updatedAt": "2026-01-18T13:12:44.754Z",
+      "createdAt": "2026-01-18T13:12:44.754Z"
+    }
+  ]
+}
